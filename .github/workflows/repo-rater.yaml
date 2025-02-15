@@ -63,9 +63,16 @@ jobs:
           COMMIT_HASH=$(git rev-parse HEAD)
           AUTHOR=$(git log -1 --pretty=format:'%an')
 
+          # Ensure the directory exists
+          mkdir -p repo-ratings
+
+          # Ensure the JSON file exists
+          if [ ! -f repo-ratings/ratings.json ]; then
+            echo "[]" > repo-ratings/ratings.json
+          fi
+
           ENTRY="{\"timestamp\": \"$TIMESTAMP\", \"commit\": \"$COMMIT_HASH\", \"author\": \"$AUTHOR\", \"score\": \"$SCORE\"}"
 
-          [ -f repo-ratings/ratings.json ] || echo "[]" > repo-ratings/ratings.json
           jq ". + [$ENTRY]" repo-ratings/ratings.json > repo-ratings/temp.json && mv repo-ratings/temp.json repo-ratings/ratings.json
 
       - name: Generate Repo Rating Chart
