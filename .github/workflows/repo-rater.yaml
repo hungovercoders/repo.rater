@@ -122,6 +122,6 @@ jobs:
       - name: Push Updated Ratings and Chart
         run: |
           cd repo-ratings
-          git repo-rating-chart.png
+          git add repo-rating-chart.png
           git commit -m "Update repo rating chart"
           git push origin repo-ratings
