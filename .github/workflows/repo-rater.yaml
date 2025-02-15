@@ -83,8 +83,12 @@ jobs:
           import pandas as pd
 
           # Load JSON data
-          with open('repo-ratings/ratings.json', 'r') as f:
-              data = json.load(f)
+          try:
+              with open('repo-ratings/ratings.json', 'r') as f:
+                  data = json.load(f)
+          except Exception as e:
+              print(f"Error loading JSON file: {e}")
+              exit(1)
 
           if len(data) > 1:
               df = pd.DataFrame(data)
@@ -103,6 +107,9 @@ jobs:
 
               # Save the chart
               plt.savefig("repo-ratings/repo-rating-chart.png", bbox_inches='tight')
+              print("Chart saved successfully.")
+          else:
+              print("Not enough data to generate a chart.")
           EOF
 
       - name: Push Updated Ratings and Chart
