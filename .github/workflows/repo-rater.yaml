@@ -75,6 +75,13 @@ jobs:
 
           jq ". + [$ENTRY]" repo-ratings/ratings.json > repo-ratings/temp.json && mv repo-ratings/temp.json repo-ratings/ratings.json
 
+      - name: Push Updated Ratings and Chart
+        run: |
+          cd repo-ratings
+          git add ratings.json
+          git commit -m "Update repo ratings data"
+          git push origin repo-ratings
+
       - name: Generate Repo Rating Chart
         run: |
           python3 <<EOF
@@ -115,6 +122,6 @@ jobs:
       - name: Push Updated Ratings and Chart
         run: |
           cd repo-ratings
-          git add ratings.json repo-rating-chart.png
+          git repo-rating-chart.png
           git commit -m "Update repo rating chart"
           git push origin repo-ratings
