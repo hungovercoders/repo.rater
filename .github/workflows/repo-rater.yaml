@@ -33,8 +33,8 @@ jobs:
       - name: Compute Score
         run: |
           SCORE=100
-          if [ "$FILES_CHANGED" -gt 20 ]; then SCORE=$((SCORE - 10)); fi
-          if [ "$LINES_CHANGED" -gt 500 ]; then SCORE=$((SCORE - 20)); fi
+          if [ "$FILES_CHANGED" -gt 1 ]; then SCORE=$((SCORE - 10)); fi
+          if [ "$LINES_CHANGED" -gt 10 ]; then SCORE=$((SCORE - 10)); fi
           echo "Repo Rating: $SCORE / 100"
           echo "SCORE=$SCORE" >> $GITHUB_ENV
 
