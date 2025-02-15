@@ -6,6 +6,9 @@ on:
       - main
       - dev
 
+permissions:
+  contents: write  # 🔥 This gives GitHub Actions push access
+
 jobs:
   analyze:
     runs-on: ubuntu-latest
