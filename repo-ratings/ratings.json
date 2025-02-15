@@ -3,25 +3,29 @@
     "timestamp": "2025-02-15T13:02:05Z",
     "commit": "c6c5059a680791a272ff0cbce49e2d7424326826",
     "author": "GitHub Actions",
-    "score": "100"
+    "files_changed": "1",
+    "lines_changed": "14"
   },
   {
     "timestamp": "2025-02-15T13:04:11Z",
     "commit": "798880ecf720d34b2048f599353b275088b96e3a",
     "author": "GitHub Actions",
-    "score": "100"
+    "files_changed": "2",
+    "lines_changed": "28"
   },
   {
     "timestamp": "2025-02-15T13:07:18Z",
     "commit": "c05554b2232f9c32387bc2b0a865c7b87b17b490",
     "author": "GitHub Actions",
-    "score": "90"
+    "files_changed": "3",
+    "lines_changed": "35"
   },
   {
     "timestamp": "2025-02-15T13:09:26Z",
     "commit": "aac7c240c4945670fbcfa8f72f5a0e85cf0b7c10",
     "author": "GitHub Actions",
-    "score": "90"
+    "files_changed": "4",
+    "lines_changed": "10"
   },
   {
     "timestamp": "2025-02-15T13:12:04Z",
