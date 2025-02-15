@@ -1,0 +1,106 @@
+name: Repo Rater
+
+on: 
+  push:
+    branches:
+      - main
+      - dev
+
+permissions:
+  contents: write  # 🔥 This gives GitHub Actions push access
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 2
+
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3 python3-pip
+          pip install matplotlib pandas
+
+      - name: Count Changed Lines
+        run: echo "LINES_CHANGED=$(git diff --shortstat HEAD^ HEAD | awk '{print $4}')" >> $GITHUB_ENV
+
+      - name: Count Changed Files
+        run: echo "FILES_CHANGED=$(git diff --name-only HEAD^ HEAD | wc -l)" >> $GITHUB_ENV
+
+      - name: Compute Score
+        run: |
+          SCORE=100
+          if [ "$FILES_CHANGED" -gt 20 ]; then SCORE=$((SCORE - 10)); fi
+          if [ "$LINES_CHANGED" -gt 500 ]; then SCORE=$((SCORE - 20)); fi
+          echo "Repo Rating: $SCORE / 100"
+          echo "SCORE=$SCORE" >> $GITHUB_ENV
+
+      - name: Configure Git User Identity
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+
+      - name: Checkout Repo Ratings Branch
+        run: |
+          if git ls-remote --exit-code origin repo-ratings; then
+            echo "Branch exists. Checking out..."
+            git fetch origin repo-ratings
+            git checkout repo-ratings
+          else
+            echo "Branch does not exist. Creating..."
+            git checkout --orphan repo-ratings
+            git commit --allow-empty -m "Initialize repo-ratings branch"
+            git push origin repo-ratings
+            git checkout repo-ratings
+          fi
+
+      - name: Update Ratings JSON
+        run: |
+          TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          COMMIT_HASH=$(git rev-parse HEAD)
+          AUTHOR=$(git log -1 --pretty=format:'%an')
+
+          ENTRY="{\"timestamp\": \"$TIMESTAMP\", \"commit\": \"$COMMIT_HASH\", \"author\": \"$AUTHOR\", \"score\": \"$SCORE\"}"
+
+          [ -f repo-ratings/ratings.json ] || echo "[]" > repo-ratings/ratings.json
+          jq ". + [$ENTRY]" repo-ratings/ratings.json > repo-ratings/temp.json && mv repo-ratings/temp.json repo-ratings/ratings.json
+
+      - name: Generate Repo Rating Chart
+        run: |
+          python3 <<EOF
+          import json
+          import matplotlib.pyplot as plt
+          import pandas as pd
+
+          # Load JSON data
+          with open('repo-ratings/ratings.json', 'r') as f:
+              data = json.load(f)
+
+          if len(data) > 1:
+              df = pd.DataFrame(data)
+              df['timestamp'] = pd.to_datetime(df['timestamp'])
+              df['score'] = df['score'].astype(int)
+              df = df.sort_values('timestamp')
+
+              # Plot
+              plt.figure(figsize=(10, 5))
+              plt.plot(df['timestamp'], df['score'], marker='o', linestyle='-', color='b')
+              plt.xlabel("Timestamp")
+              plt.ylabel("Repo Rating")
+              plt.title("Repo Rating Over Time")
+              plt.xticks(rotation=45)
+              plt.grid(True)
+
+              # Save the chart
+              plt.savefig("repo-ratings/repo-rating-chart.png", bbox_inches='tight')
+          EOF
+
+      - name: Push Updated Ratings and Chart
+        run: |
+          cd repo-ratings
+          git add ratings.json repo-rating-chart.png
+          git commit -m "Update repo rating chart"
+          git push origin repo-ratings
