@@ -36,10 +36,18 @@ jobs:
           echo "SCORE=$SCORE" >> $GITHUB_ENV
 
       - name: Checkout Repo Ratings Branch
-        uses: actions/checkout@v3
-        with:
-          ref: repo-ratings
-          path: repo-ratings
+        run: |
+          if git ls-remote --exit-code origin repo-ratings; then
+            echo "Branch exists. Checking out..."
+            git fetch origin repo-ratings
+            git checkout repo-ratings
+          else
+            echo "Branch does not exist. Creating..."
+            git checkout --orphan repo-ratings
+            git commit --allow-empty -m "Initialize repo-ratings branch"
+            git push origin repo-ratings
+            git checkout repo-ratings
+          fi
 
       - name: Update Ratings JSON
         run: |
