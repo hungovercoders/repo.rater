@@ -30,14 +30,6 @@ jobs:
       - name: Count Changed Files
         run: echo "FILES_CHANGED=$(git diff --name-only HEAD^ HEAD | wc -l)" >> $GITHUB_ENV
 
-      - name: Compute Score
-        run: |
-          SCORE=100
-          if [ "$FILES_CHANGED" -gt 1 ]; then SCORE=$((SCORE - 10)); fi
-          if [ "$LINES_CHANGED" -gt 10 ]; then SCORE=$((SCORE - 10)); fi
-          echo "Repo Rating: $SCORE / 100"
-          echo "SCORE=$SCORE" >> $GITHUB_ENV
-
       - name: Configure Git User Identity
         run: |
           git config --global user.name "GitHub Actions"
@@ -71,18 +63,18 @@ jobs:
             echo "[]" > repo-ratings/ratings.json
           fi
 
-          ENTRY="{\"timestamp\": \"$TIMESTAMP\", \"commit\": \"$COMMIT_HASH\", \"author\": \"$AUTHOR\", \"score\": \"$SCORE\"}"
+          ENTRY="{\"timestamp\": \"$TIMESTAMP\", \"commit\": \"$COMMIT_HASH\", \"author\": \"$AUTHOR\", \"files_changed\": \"$FILES_CHANGED\", \"lines_changed\": \"$LINES_CHANGED\"}"
 
           jq ". + [$ENTRY]" repo-ratings/ratings.json > repo-ratings/temp.json && mv repo-ratings/temp.json repo-ratings/ratings.json
 
-      - name: Push Updated Ratings and Chart
+      - name: Push Updated Ratings Data
         run: |
           cd repo-ratings
           git add ratings.json
           git commit -m "Update repo ratings data"
           git push origin repo-ratings
 
-      - name: Generate Repo Rating Chart
+      - name: Generate Repo Change Chart
         run: |
           python3 <<EOF
           import json
@@ -100,28 +92,31 @@ jobs:
           if len(data) > 1:
               df = pd.DataFrame(data)
               df['timestamp'] = pd.to_datetime(df['timestamp'])
-              df['score'] = df['score'].astype(int)
+              df['files_changed'] = df['files_changed'].astype(int)
+              df['lines_changed'] = df['lines_changed'].astype(int)
               df = df.sort_values('timestamp')
 
               # Plot
               plt.figure(figsize=(10, 5))
-              plt.plot(df['timestamp'], df['score'], marker='o', linestyle='-', color='b')
+              plt.plot(df['timestamp'], df['files_changed'], marker='o', linestyle='-', color='b', label="Files Changed")
+              plt.plot(df['timestamp'], df['lines_changed'], marker='s', linestyle='--', color='r', label="Lines Changed")
               plt.xlabel("Timestamp")
-              plt.ylabel("Repo Rating")
-              plt.title("Repo Rating Over Time")
+              plt.ylabel("Count")
+              plt.title("Repo Changes Over Time")
               plt.xticks(rotation=45)
+              plt.legend()
               plt.grid(True)
 
               # Save the chart
-              plt.savefig("repo-ratings/repo-rating-chart.png", bbox_inches='tight')
+              plt.savefig("repo-ratings/repo-changes-chart.png", bbox_inches='tight')
               print("Chart saved successfully.")
           else:
               print("Not enough data to generate a chart.")
           EOF
 
-      - name: Push Updated Ratings and Chart
+      - name: Push Updated Repo Change Chart
         run: |
           cd repo-ratings
-          git add repo-rating-chart.png
-          git commit -m "Update repo rating chart"
+          git add repo-changes-chart.png
+          git commit -m "Update repo changes chart"
           git push origin repo-ratings
